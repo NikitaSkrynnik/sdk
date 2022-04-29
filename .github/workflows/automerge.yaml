@@ -8,4 +8,4 @@ on:
       - 'ci'
 jobs:
   automerge:
-    uses: NikitaSkrynnik/.github/workflows/automerge.yaml@main
+    uses: NikitaSkrynnik/.github/.github/workflows/automerge.yaml@main
