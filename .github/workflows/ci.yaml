@@ -25,5 +25,8 @@ jobs:
     with:
       allowed_repositories: "api"
 
-  check-gomod:
-    uses: NikitaSkrynnik/.github/.github/workflows/check-gomod.yaml@reusable-workflows
+  checkgomod:
+    uses: NikitaSkrynnik/.github/.github/workflows/checkgomod.yaml@reusable-workflows
+  
+  gogenerate:
+    uses: NikitaSkrynnik/.github/.github/workflows/gogenerate.yaml@reusable-workflows
