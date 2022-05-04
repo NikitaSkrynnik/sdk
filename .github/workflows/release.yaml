@@ -13,16 +13,16 @@ jobs:
     with:
       dependent_repositories: >
         ["sdk-k8s",
-        "sdk-kernel"
-        "cmd-nsmgr"
-        "cmd-nsmgr-proxy"
-        "cmd-registry-memory"
-        "cmd-registry-proxy-dns"
-        "cmd-nse-remote-vlan"
-        "cmd-nse-vfio"
-        "cmd-nsc-init"
-        "cmd-ipam-vl3"
-        "cmd-map-ip-k8s"
+        "sdk-kernel",
+        "cmd-nsmgr",
+        "cmd-nsmgr-proxy",
+        "cmd-registry-memory",
+        "cmd-registry-proxy-dns",
+        "cmd-nse-remote-vlan",
+        "cmd-nse-vfio",
+        "cmd-nsc-init",
+        "cmd-ipam-vl3",
+        "cmd-map-ip-k8s",
         "cmd-admission-webhook-k8s"]
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
