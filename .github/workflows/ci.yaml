@@ -16,3 +16,6 @@ jobs:
   
   golangci-lint:
     uses: NikitaSkrynnik/.github/.github/workflows/golangci-lint.yaml@reusable-workflows
+
+  exclude-fmt-errorf:
+    uses: NikitaSkrynnik/.github/.github/workflows/exclude-fmt-errorf.yaml@reusable-workflows
