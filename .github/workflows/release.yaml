@@ -11,8 +11,8 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' && contains(github.event.workflow_run.head_branch, 'release/') }}
     uses: NikitaSkrynnik/.github/.github/workflows/release.yaml@reusable-workflows
     with:
-      dependent_repositories:
-        '["sdk-k8s",
+      dependent_repositories: >
+        ["sdk-k8s",
         "sdk-kernel"
         "cmd-nsmgr"
         "cmd-nsmgr-proxy"
@@ -23,6 +23,6 @@ jobs:
         "cmd-nsc-init"
         "cmd-ipam-vl3"
         "cmd-map-ip-k8s"
-        "cmd-admission-webhook-k8s"]'
+        "cmd-admission-webhook-k8s"]
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
