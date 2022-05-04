@@ -9,10 +9,5 @@ jobs:
   yamllint:
     uses: NikitaSkrynnik/.github/.github/workflows/yamllint.yaml@reusable-workflows
 
-  build-and-test:
-    uses: NikitaSkrynnik/.github/.github/workflows/build-and-test.yaml@reusable-workflows
-    with:
-      os: '["ubuntu-latest", "macos-latest", "windows-latest"]'
-  
   golangci-lint:
     uses: NikitaSkrynnik/.github/.github/workflows/golangci-lint.yaml@reusable-workflows
