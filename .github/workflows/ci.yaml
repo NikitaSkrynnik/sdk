@@ -19,3 +19,8 @@ jobs:
 
   exclude-fmt-errorf:
     uses: NikitaSkrynnik/.github/.github/workflows/exclude-fmt-errorf.yaml@reusable-workflows
+
+  restrict-nsm-deps:
+    uses: NikitaSkrynnik/.github/.github/workflows/restrict-nsm-deps.yaml@reusable-workflows
+    with:
+      allowed_repositories: "api, sdk-kernel"
