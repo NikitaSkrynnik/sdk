@@ -23,4 +23,4 @@ jobs:
   restrict-nsm-deps:
     uses: NikitaSkrynnik/.github/.github/workflows/restrict-nsm-deps.yaml@reusable-workflows
     with:
-      allowed_repositories: "api"
+      allowed_repositories: "api, sdk-kernel"
