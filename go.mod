@@ -43,8 +43,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-
-
 require (
 	github.com/OneOfOne/xxhash v1.2.3 // indirect
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
