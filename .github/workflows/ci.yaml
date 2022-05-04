@@ -24,3 +24,6 @@ jobs:
     uses: NikitaSkrynnik/.github/.github/workflows/restrict-nsm-deps.yaml@reusable-workflows
     with:
       allowed_repositories: "api"
+
+  check-gomod:
+    uses: NikitaSkrynnik/.github/.github/workflows/check-gomod.yaml@reusable-workflows
