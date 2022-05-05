@@ -12,7 +12,7 @@ jobs:
     uses: NikitaSkrynnik/.github/.github/workflows/release.yaml@main
     with:
       dependent_repositories: |
-        ["sdk-k8s",
+        "sdk-k8s",
         "sdk-kernel",
         "cmd-nsmgr",
         "cmd-nsmgr-proxy",
@@ -23,7 +23,7 @@ jobs:
         "cmd-nsc-init",
         "cmd-ipam-vl3",
         "cmd-map-ip-k8s",
-        "cmd-admission-webhook-k8s"]
+        "cmd-admission-webhook-k8s"
 
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
