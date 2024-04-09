@@ -7,4 +7,4 @@ on:
       - "release/**"
 jobs:
   yamllint:
-    uses: networkservicemesh/.github/.github/workflows/yamllint.yaml@main 
+    uses: networkservicemesh/.github/.github/workflows/yamllint.yaml@main
