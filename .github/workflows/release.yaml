@@ -28,16 +28,9 @@ jobs:
           echo tag=${branch#release/} >> $GITHUB_OUTPUT
         id: get-tag-step
 
-  create-release:
-    name: Create release
-    needs: get-tag
-    uses: networkservicemesh/.github/.github/workflows/release.yaml@main
-    secrets:
-      token: ${{ secrets.NSM_BOT_GITHUB_TOKEN }}
-
   release-dependent-repositories:
     name: Release dependent repositories
-    needs: [get-tag, create-release]
+    needs: get-tag
     uses: networkservicemesh/.github/.github/workflows/release-dependent-repositories.yaml@main
     with:
       tag: ${{ needs.get-tag.outputs.tag }}
@@ -58,4 +51,4 @@ jobs:
         "cmd-csi-driver",
         "cmd-dashboard-backend"]
     secrets:
-      token: ${{ secrets.NSM_BOT_GITHUB_TOKEN }}
+      token: ${{ secrets.GITHUB_TOKEN }}
