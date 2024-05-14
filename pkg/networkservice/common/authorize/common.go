@@ -23,8 +23,6 @@ import (
 
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 	"github.com/pkg/errors"
-
-	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 // Policy represents authorization policy for network service.
@@ -46,7 +44,7 @@ func (l *policiesList) check(ctx context.Context, p *networkservice.Path) error 
 			continue
 		}
 		if err := policy.Check(ctx, p); err != nil {
-			log.FromContext(ctx).Errorf("policy failed: %v", policy.Name())
+			//log.FromContext(ctx).Errorf("policy failed: %v", policy.Name())
 			return errors.Wrap(err, "networkservice: an error occurred during authorization policy check")
 		}
 	}

@@ -24,12 +24,17 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/tls"
+
 	"crypto/x509"
+	"fmt"
 	"math/big"
+	mathrand "math/rand"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -41,8 +46,15 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/authorize"
+	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
+	"github.com/networkservicemesh/sdk/pkg/networkservice/utils/inject/injecterror"
+	"github.com/networkservicemesh/sdk/pkg/tools/nanoid"
+	"github.com/networkservicemesh/sdk/pkg/tools/opa"
+
+	_ "net/http/pprof"
 )
 
 func generateCert(u *url.URL) []byte {
@@ -207,4 +219,134 @@ func TestAuthorize_EmptySpiffeIDConnectionMapOnClose(t *testing.T) {
 
 	_, err = server.Close(ctx, conn)
 	require.NoError(t, err)
+}
+
+func Run(f func()) int64 {
+	var then = new(runtime.MemStats)
+	var now = new(runtime.MemStats)
+
+	runtime.GC()
+	runtime.ReadMemStats(then)
+
+	f()
+
+	runtime.GC()
+	runtime.ReadMemStats(now)
+
+	fmt.Printf("HeapInuse: %d\n", int64(now.HeapInuse-then.HeapInuse))
+	fmt.Printf("HeapObjects: %d\n", int64(now.HeapObjects-then.HeapObjects))
+
+	return int64(now.HeapObjects - then.HeapObjects)
+}
+
+func generateRandomPath() *networkservice.Path {
+	path := &networkservice.Path{}
+
+	for i := 0; i < 10; i++ {
+		seg := &networkservice.PathSegment{}
+		seg.Id = nanoid.GenerateStringWithoutError(10)
+		seg.Name = nanoid.GenerateStringWithoutError(10)
+		seg.Token = nanoid.GenerateStringWithoutError(10)
+		seg.Expires = &timestamppb.Timestamp{Seconds: mathrand.Int63()}
+		path.PathSegments = append(path.PathSegments, seg)
+	}
+
+	path.Index = 9
+	return path
+}
+
+func TestAuthorizeMemoryLeak(t *testing.T) {
+	chain := next.NewNetworkServiceServer(
+		authorize.NewServer(),
+		injecterror.NewServer(injecterror.WithError(errors.New("Error"))),
+	)
+
+	request := &networkservice.NetworkServiceRequest{
+		Connection: &networkservice.Connection{
+			Id: "id",
+		},
+	}
+
+	testLeak := func() {
+		certBytes := generateCert(&url.URL{Scheme: "spiffe", Host: "test.com", Path: "test"})
+		ctx, err := withPeer(context.Background(), certBytes)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		request.Connection.Path = generateRandomPath()
+		chain.Request(ctx, request)
+	}
+
+	Run(func() {
+		for i := 0; i < 100000; i++ {
+			testLeak()
+		}
+	})
+
+	fmt.Println(http.ListenAndServe("localhost:6080", nil))
+}
+
+func TestOPAMemoryLeak(t *testing.T) {
+	request := &networkservice.NetworkServiceRequest{
+		Connection: &networkservice.Connection{
+			Id: "id",
+			Path: &networkservice.Path{
+				Index: 7,
+				PathSegments: []*networkservice.PathSegment{
+					{
+						Name:  "client",
+						Token: "token",
+						Id:    "clientid",
+					},
+					{
+						Name:  "nsmgr",
+						Token: "token",
+						Id:    "nsmgrid",
+					},
+					{
+						Name:  "client",
+						Token: "token",
+						Id:    "clientid",
+					},
+					{
+						Name:  "nsmgr",
+						Token: "token",
+						Id:    "nsmgrid",
+					},
+					{
+						Name:  "client",
+						Token: "token",
+						Id:    "clientid",
+					},
+					{
+						Name:  "nsmgr",
+						Token: "token",
+						Id:    "nsmgrid",
+					},
+					{
+						Name:  "client",
+						Token: "token",
+						Id:    "clientid",
+					},
+					{
+						Name:  "nsmgr",
+						Token: "token",
+						Id:    "nsmgrid",
+					},
+				},
+			},
+		},
+	}
+
+	testLeak := func() {
+		opa.PreparedOpaInput(context.Background(), request)
+	}
+
+	Run(func() {
+		for i := 0; i < 1000000; i++ {
+			testLeak()
+		}
+	})
+
+	fmt.Println(http.ListenAndServe("localhost:6080", nil))
 }

@@ -96,3 +96,39 @@ func GenerateString(size int, opt ...Option) (string, error) {
 		}
 	}
 }
+
+func GenerateStringWithoutError(size int, opt ...Option) string {
+	opts := &generatorOpts{
+		alphabet:            DefaultAlphabet,
+		randomByteGenerator: rand.Reader,
+	}
+
+	for _, o := range opt {
+		o(opts)
+	}
+
+	mask := 2<<uint32(31-bits.LeadingZeros32(uint32(len(opts.alphabet)-1|1))) - 1
+	step := int(math.Ceil(1.6 * float64(mask*size) / float64(len(opts.alphabet))))
+
+	id := make([]byte, size)
+
+	for {
+		randomBuffer, err := generateRandomBuffer(opts.randomByteGenerator, step)
+		if err != nil {
+			return ""
+		}
+
+		j := 0
+		for i := 0; i < step; i++ {
+			currentIndex := int(randomBuffer[i]) & mask
+
+			if currentIndex < len(opts.alphabet) {
+				id[j] = opts.alphabet[currentIndex]
+				j++
+				if j == size {
+					return string(id)
+				}
+			}
+		}
+	}
+}
