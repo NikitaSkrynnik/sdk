@@ -73,6 +73,7 @@ func NewServer(opts ...Option) networkservice.NetworkServiceServer {
 func (a *authorizeServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
 	conn := request.GetConnection()
 	var index = conn.GetPath().GetIndex()
+
 	var leftSide = &networkservice.Path{
 		Index:        index,
 		PathSegments: conn.GetPath().GetPathSegments()[:index+1],

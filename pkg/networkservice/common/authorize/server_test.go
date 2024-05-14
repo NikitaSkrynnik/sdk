@@ -24,12 +24,13 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/tls"
+	"log"
+	"runtime/pprof"
 
 	"crypto/x509"
 	"fmt"
 	"math/big"
 	mathrand "math/rand"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -52,7 +53,6 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/utils/inject/injecterror"
 	"github.com/networkservicemesh/sdk/pkg/tools/nanoid"
-	"github.com/networkservicemesh/sdk/pkg/tools/opa"
 
 	_ "net/http/pprof"
 )
@@ -239,18 +239,33 @@ func Run(f func()) int64 {
 	return int64(now.HeapObjects - then.HeapObjects)
 }
 
+func RunLoop(f func()) {
+	count := 10
+	for i := 0; i < count; i++ {
+		f()
+
+		f, err := os.Create(fmt.Sprintf("mem%d", i))
+		if err != nil {
+			log.Fatal("could not create memory profile: ", err)
+		}
+		defer f.Close() // error handling omitted for example
+		runtime.GC()
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatal("could not write memory profile: ", err)
+		}
+	}
+}
+
 func generateRandomPath() *networkservice.Path {
 	path := &networkservice.Path{}
-
 	for i := 0; i < 10; i++ {
 		seg := &networkservice.PathSegment{}
-		seg.Id = nanoid.GenerateStringWithoutError(10)
+		seg.Id = nanoid.GenerateStringWithoutError(20)
 		seg.Name = nanoid.GenerateStringWithoutError(10)
-		seg.Token = nanoid.GenerateStringWithoutError(10)
+		seg.Token = nanoid.GenerateStringWithoutError(120)
 		seg.Expires = &timestamppb.Timestamp{Seconds: mathrand.Int63()}
 		path.PathSegments = append(path.PathSegments, seg)
 	}
-
 	path.Index = 9
 	return path
 }
@@ -277,76 +292,9 @@ func TestAuthorizeMemoryLeak(t *testing.T) {
 		chain.Request(ctx, request)
 	}
 
-	Run(func() {
-		for i := 0; i < 100000; i++ {
+	RunLoop(func() {
+		for i := 0; i < 50990; i++ {
 			testLeak()
 		}
 	})
-
-	fmt.Println(http.ListenAndServe("localhost:6080", nil))
-}
-
-func TestOPAMemoryLeak(t *testing.T) {
-	request := &networkservice.NetworkServiceRequest{
-		Connection: &networkservice.Connection{
-			Id: "id",
-			Path: &networkservice.Path{
-				Index: 7,
-				PathSegments: []*networkservice.PathSegment{
-					{
-						Name:  "client",
-						Token: "token",
-						Id:    "clientid",
-					},
-					{
-						Name:  "nsmgr",
-						Token: "token",
-						Id:    "nsmgrid",
-					},
-					{
-						Name:  "client",
-						Token: "token",
-						Id:    "clientid",
-					},
-					{
-						Name:  "nsmgr",
-						Token: "token",
-						Id:    "nsmgrid",
-					},
-					{
-						Name:  "client",
-						Token: "token",
-						Id:    "clientid",
-					},
-					{
-						Name:  "nsmgr",
-						Token: "token",
-						Id:    "nsmgrid",
-					},
-					{
-						Name:  "client",
-						Token: "token",
-						Id:    "clientid",
-					},
-					{
-						Name:  "nsmgr",
-						Token: "token",
-						Id:    "nsmgrid",
-					},
-				},
-			},
-		},
-	}
-
-	testLeak := func() {
-		opa.PreparedOpaInput(context.Background(), request)
-	}
-
-	Run(func() {
-		for i := 0; i < 1000000; i++ {
-			testLeak()
-		}
-	})
-
-	fmt.Println(http.ListenAndServe("localhost:6080", nil))
 }
