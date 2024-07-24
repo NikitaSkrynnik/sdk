@@ -25,6 +25,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/networkservicemesh/sdk/pkg/networkservice/common/asyncclose"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/trimpath"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/utils/metadata"
@@ -122,6 +123,7 @@ func NewServer(ctx context.Context, tokenGenerator token.GeneratorFunc, options 
 		append([]networkservice.NetworkServiceServer{
 			updatepath.NewServer(opts.name),
 			begin.NewServer(),
+			asyncclose.NewServer(),
 			updatetoken.NewServer(tokenGenerator),
 			opts.authorizeServer,
 			metadata.NewServer(),
