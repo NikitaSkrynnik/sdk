@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
@@ -39,38 +38,38 @@ const (
 )
 
 func logRequest(ctx context.Context, request proto.Message, prefixes ...string) {
-	msg := strings.Join(prefixes, "-")
+	//msg := strings.Join(prefixes, "-")
 	//diffMsg := strings.Join(append(prefixes, "diff"), "-")
 
 	connInfo, ok := trace(ctx)
 	if ok && !proto.Equal(connInfo.Request, request) {
-		if connInfo.Request != nil && connInfo.Request.ProtoReflect().Descriptor().FullName() == request.ProtoReflect().Descriptor().FullName() {
-			//requestDiff, hadChanges := Diff(connInfo.Request.ProtoReflect(), request.ProtoReflect())
-			//if hadChanges {
-			//	logObjectTrace(ctx, diffMsg, requestDiff)
-			//}
-		} else {
-			logObjectTrace(ctx, msg, request)
-		}
-		connInfo.Request = proto.Clone(request)
+		//if connInfo.Request != nil && connInfo.Request.ProtoReflect().Descriptor().FullName() == request.ProtoReflect().Descriptor().FullName() {
+		//requestDiff, hadChanges := Diff(connInfo.Request.ProtoReflect(), request.ProtoReflect())
+		//if hadChanges {
+		//	logObjectTrace(ctx, diffMsg, requestDiff)
+		//}
+		//} else {
+		//	logObjectTrace(ctx, msg, request)
+		//}
+		//connInfo.Request = proto.Clone(request)
 	}
 }
 
 func logResponse(ctx context.Context, response proto.Message, prefixes ...string) {
-	msg := strings.Join(append(prefixes, "response"), "-")
+	//msg := strings.Join(append(prefixes, "response"), "-")
 	//diffMsg := strings.Join(append(prefixes, "response", "diff"), "-")
 
 	connInfo, ok := trace(ctx)
 	if ok && !proto.Equal(connInfo.Response, response) {
-		if connInfo.Response != nil {
-			//responseDiff, changed := Diff(connInfo.Response.ProtoReflect(), response.ProtoReflect())
-			//if changed {
-			//	logObjectTrace(ctx, diffMsg, responseDiff)
-			//}
-		} else {
-			logObjectTrace(ctx, msg, response)
-		}
-		connInfo.Response = proto.Clone(response)
+		//if connInfo.Response != nil {
+		//responseDiff, changed := Diff(connInfo.Response.ProtoReflect(), response.ProtoReflect())
+		//if changed {
+		//	logObjectTrace(ctx, diffMsg, responseDiff)
+		//}
+		//} else {
+		//	logObjectTrace(ctx, msg, response)
+		//}
+		//connInfo.Response = proto.Clone(response)
 		return
 	}
 }
