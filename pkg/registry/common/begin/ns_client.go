@@ -20,6 +20,7 @@ package begin
 
 import (
 	"context"
+	"time"
 
 	"github.com/edwarnicke/genericsync"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -85,6 +86,14 @@ func (b *beginNSClient) Register(ctx context.Context, in *registry.NetworkServic
 }
 
 func (b *beginNSClient) Find(ctx context.Context, in *registry.NetworkServiceQuery, opts ...grpc.CallOption) (registry.NetworkServiceRegistry_FindClient, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("beginNSClient forth")
+	start := time.Now()
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).Infof("beginNSClient back")
+
+		log.FromContext(ctx).Infof("time NS spent: %v", time.Since(start).Milliseconds())
+	}()
+
 	return next.NetworkServiceRegistryClient(ctx).Find(ctx, in, opts...)
 }
 

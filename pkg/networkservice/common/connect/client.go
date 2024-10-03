@@ -20,6 +20,7 @@ package connect
 
 import (
 	"context"
+	"time"
 
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 	"github.com/pkg/errors"
@@ -27,6 +28,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/clientconn"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type connectClient struct{}
@@ -37,6 +39,11 @@ func NewClient() networkservice.NetworkServiceClient {
 }
 
 func (c *connectClient) Request(ctx context.Context, request *networkservice.NetworkServiceRequest, opts ...grpc.CallOption) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("connectClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("connectClient back")
+	}()
+
 	cc, loaded := clientconn.Load(ctx)
 	if !loaded {
 		return nil, errors.New("no grpc.ClientConnInterface provided")

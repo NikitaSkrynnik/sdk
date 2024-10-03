@@ -18,6 +18,7 @@ package begin
 
 import (
 	"context"
+	"time"
 
 	"github.com/edwarnicke/genericsync"
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
@@ -39,6 +40,10 @@ func NewServer() networkservice.NetworkServiceServer {
 }
 
 func (b *beginServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (conn *networkservice.Connection, err error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("beginserver forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("beginserver back")
+	}()
 	// No connection.ID, no service
 	if request.GetConnection().GetId() == "" {
 		return nil, errors.New("request.EventFactory.Id must not be zero valued")

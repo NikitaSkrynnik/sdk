@@ -123,10 +123,16 @@ func (c *dialNSFindClient) Recv() (*registry.NetworkServiceResponse, error) {
 }
 
 func (c *dialNSClient) Find(ctx context.Context, in *registry.NetworkServiceQuery, opts ...grpc.CallOption) (registry.NetworkServiceRegistry_FindClient, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSClient forth 0")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSClient back 2")
+	}()
+
 	clientURL := clienturlctx.ClientURL(ctx)
 	if clientURL == nil {
 		return next.NetworkServiceRegistryClient(ctx).Find(ctx, in, opts...)
 	}
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSClient forth 1")
 
 	di := newDialer(c.chainCtx, c.dialTimeout, c.dialOptions...)
 
@@ -136,6 +142,8 @@ func (c *dialNSClient) Find(ctx context.Context, in *registry.NetworkServiceQuer
 		return nil, err
 	}
 
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSClient forth 2")
+
 	clientconn.Store(ctx, di)
 
 	cleanupFn := func() {
@@ -143,26 +151,31 @@ func (c *dialNSClient) Find(ctx context.Context, in *registry.NetworkServiceQuer
 		_ = di.Close()
 	}
 
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSClient forth 3")
+
 	resp, err := next.NetworkServiceRegistryClient(ctx).Find(ctx, in, opts...)
 	if err != nil {
 		cleanupFn()
 		return nil, err
 	}
 
-	var stopContext, stopCancel = context.WithTimeout(resp.Context(), time.Minute/4)
-	if in.Watch {
-		stopContext = resp.Context()
-	}
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSClient back 0")
+
 	cleanupFn = func() {
-		stopCancel()
 		clientconn.Delete(ctx)
 		_ = di.Close()
 	}
 
 	go func() {
-		<-stopContext.Done()
-		cleanupFn()
+		defer cleanupFn()
+		after := time.After(time.Minute / 4)
+		select {
+		case <-after:
+		case <-resp.Context().Done():
+		}
 	}()
+
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSClient back 1")
 
 	return &dialNSFindClient{
 		NetworkServiceRegistry_FindClient: resp,

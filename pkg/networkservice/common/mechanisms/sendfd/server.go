@@ -21,12 +21,14 @@ package sendfd
 
 import (
 	"context"
+	"time"
 
 	"github.com/edwarnicke/grpcfd"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type sendFDServer struct{}
@@ -37,6 +39,11 @@ func NewServer() networkservice.NetworkServiceServer {
 }
 
 func (s sendFDServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("sendFDServer forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("sendFDServer back")
+	}()
+
 	// Call the next server chain element in the chain
 	conn, err := next.Server(ctx).Request(ctx, request)
 	if err != nil {

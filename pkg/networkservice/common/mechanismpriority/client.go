@@ -21,6 +21,7 @@ import (
 	"context"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
@@ -28,6 +29,7 @@ import (
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type mechanismPriorityClient struct {
@@ -47,6 +49,11 @@ func NewClient(priorities ...string) networkservice.NetworkServiceClient {
 }
 
 func (m *mechanismPriorityClient) Request(ctx context.Context, request *networkservice.NetworkServiceRequest, opts ...grpc.CallOption) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("mechanismPriorityClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("mechanismPriorityClient back")
+	}()
+
 	request.MechanismPreferences = prioritizeMechanismsByType(request.GetMechanismPreferences(), m.priorities)
 	return next.Client(ctx).Request(ctx, request, opts...)
 }

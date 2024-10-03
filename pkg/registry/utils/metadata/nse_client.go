@@ -18,6 +18,7 @@ package metadata
 
 import (
 	"context"
+	"time"
 
 	"github.com/edwarnicke/genericsync"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -57,6 +58,11 @@ func (m *metaDataNSEClient) Register(ctx context.Context, nse *registry.NetworkS
 }
 
 func (m *metaDataNSEClient) Find(ctx context.Context, query *registry.NetworkServiceEndpointQuery, opts ...grpc.CallOption) (registry.NetworkServiceEndpointRegistry_FindClient, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("metaDataNSEClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).Infof("metaDataNSEClient back")
+	}()
+
 	nseName := query.GetNetworkServiceEndpoint().GetName()
 	return next.NetworkServiceEndpointRegistryClient(ctx).Find(load(ctx, nseName, &m.Map), query, opts...)
 }

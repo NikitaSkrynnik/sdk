@@ -45,10 +45,8 @@ type traceNetworkServiceRegistryFindClient struct {
 }
 
 func (t *traceNetworkServiceRegistryFindClient) Recv() (*registry.NetworkServiceResponse, error) {
-	ctx, finish := withLog(t.Context(), t.operation, methodNameRecv)
-	defer finish()
 
-	s := streamcontext.NetworkServiceRegistryFindClient(ctx, t.NetworkServiceRegistry_FindClient)
+	s := streamcontext.NetworkServiceRegistryFindClient(t.Context(), t.NetworkServiceRegistry_FindClient)
 	rv, err := s.Recv()
 
 	if err != nil {
@@ -58,56 +56,32 @@ func (t *traceNetworkServiceRegistryFindClient) Recv() (*registry.NetworkService
 		if status.Code(err) == codes.Canceled {
 			return nil, errors.WithStack(err)
 		}
-		return nil, logError(ctx, err, t.operation)
+		return nil, err
 	}
-	logObjectTrace(ctx, "recv-response", rv.NetworkService)
 	return rv, nil
 }
 
 func (t *traceNetworkServiceRegistryClient) Register(ctx context.Context, in *registry.NetworkService, opts ...grpc.CallOption) (*registry.NetworkService, error) {
-	operation := typeutils.GetFuncName(t.traced, methodNameRegister)
-	ctx, finish := withLog(ctx, operation, methodNameRegister)
-	defer finish()
-
-	logObjectTrace(ctx, "register", in)
-
 	rv, err := t.traced.Register(ctx, in, opts...)
 	if err != nil {
-		return nil, logError(ctx, err, operation)
+		return nil, err
 	}
-	logObjectTrace(ctx, "register-response", rv)
 	return rv, nil
 }
 func (t *traceNetworkServiceRegistryClient) Find(ctx context.Context, in *registry.NetworkServiceQuery, opts ...grpc.CallOption) (registry.NetworkServiceRegistry_FindClient, error) {
-	operation := typeutils.GetFuncName(t.traced, methodNameFind)
-	ctx, finish := withLog(ctx, operation, methodNameFind)
-	defer finish()
-
-	logObjectTrace(ctx, "find", in)
-
-	// Actually call the next
 	rv, err := t.traced.Find(ctx, in, opts...)
 	if err != nil {
-		return nil, logError(ctx, err, operation)
+		return nil, err
 	}
-	logObjectTrace(ctx, "find-response", rv)
 
 	return &traceNetworkServiceRegistryFindClient{NetworkServiceRegistry_FindClient: rv, operation: typeutils.GetFuncName(t.traced, methodNameRecv)}, nil
 }
 
 func (t *traceNetworkServiceRegistryClient) Unregister(ctx context.Context, in *registry.NetworkService, opts ...grpc.CallOption) (*empty.Empty, error) {
-	operation := typeutils.GetFuncName(t.traced, methodNameUnregister)
-	ctx, finish := withLog(ctx, operation, methodNameUnregister)
-	defer finish()
-
-	logObjectTrace(ctx, "unregister", in)
-
-	// Actually call the next
 	rv, err := t.traced.Unregister(ctx, in, opts...)
 	if err != nil {
-		return nil, logError(ctx, err, operation)
+		return nil, err
 	}
-	logObjectTrace(ctx, "unregister-response", rv)
 	return rv, nil
 }
 
@@ -121,52 +95,32 @@ type traceNetworkServiceRegistryServer struct {
 }
 
 func (t *traceNetworkServiceRegistryServer) Register(ctx context.Context, in *registry.NetworkService) (*registry.NetworkService, error) {
-	operation := typeutils.GetFuncName(t.traced, methodNameRegister)
-	ctx, finish := withLog(ctx, operation, methodNameRegister)
-	defer finish()
-
-	logObjectTrace(ctx, "register", in)
-
 	rv, err := t.traced.Register(ctx, in)
 	if err != nil {
-		return nil, logError(ctx, err, operation)
+		return nil, err
 	}
-	logObjectTrace(ctx, "register-response", rv)
 	return rv, nil
 }
 
 func (t *traceNetworkServiceRegistryServer) Find(in *registry.NetworkServiceQuery, s registry.NetworkServiceRegistry_FindServer) error {
-	operation := typeutils.GetFuncName(t.traced, methodNameFind)
-	ctx, finish := withLog(s.Context(), operation, methodNameFind)
-	defer finish()
-
 	s = &traceNetworkServiceRegistryFindServer{
-		NetworkServiceRegistry_FindServer: streamcontext.NetworkServiceRegistryFindServer(ctx, s),
+		NetworkServiceRegistry_FindServer: streamcontext.NetworkServiceRegistryFindServer(s.Context(), s),
 		operation:                         typeutils.GetFuncName(t.traced, methodNameSend),
 	}
-	logObjectTrace(ctx, "find", in)
 
 	// Actually call the next
 	err := t.traced.Find(in, s)
 	if err != nil {
-		return logError(ctx, err, operation)
+		return err
 	}
 	return nil
 }
 
 func (t *traceNetworkServiceRegistryServer) Unregister(ctx context.Context, in *registry.NetworkService) (*empty.Empty, error) {
-	operation := typeutils.GetFuncName(t.traced, methodNameUnregister)
-	ctx, finish := withLog(ctx, operation, methodNameUnregister)
-	defer finish()
-
-	logObjectTrace(ctx, "unregister", in)
-
-	// Actually call the next
 	rv, err := t.traced.Unregister(ctx, in)
 	if err != nil {
-		return nil, logError(ctx, err, operation)
+		return nil, err
 	}
-	logObjectTrace(ctx, "unregister-response", rv)
 	return rv, nil
 }
 
@@ -181,15 +135,11 @@ type traceNetworkServiceRegistryFindServer struct {
 }
 
 func (t *traceNetworkServiceRegistryFindServer) Send(nsResp *registry.NetworkServiceResponse) error {
-	ctx, finish := withLog(t.Context(), t.operation, methodNameSend)
-	defer finish()
 
-	logObjectTrace(ctx, "network service", nsResp.NetworkService)
-
-	s := streamcontext.NetworkServiceRegistryFindServer(ctx, t.NetworkServiceRegistry_FindServer)
+	s := streamcontext.NetworkServiceRegistryFindServer(t.Context(), t.NetworkServiceRegistry_FindServer)
 	err := s.Send(nsResp)
 	if err != nil {
-		return logError(ctx, err, t.operation)
+		return err
 	}
 	return nil
 }

@@ -25,6 +25,7 @@ import (
 	"context"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/edwarnicke/genericsync"
 	"github.com/edwarnicke/grpcfd"
@@ -32,6 +33,7 @@ import (
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type recvFDServer struct {
@@ -45,6 +47,11 @@ func NewServer() networkservice.NetworkServiceServer {
 }
 
 func (r *recvFDServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("recvFDServer forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("recvFDServer back")
+	}()
+
 	// Get the grpcfd.FDRecver
 	recv, ok := grpcfd.FromContext(ctx)
 	if !ok {

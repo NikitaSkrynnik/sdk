@@ -19,6 +19,7 @@ package updatetoken
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
@@ -42,6 +43,11 @@ func NewServer(tokenGenerator token.GeneratorFunc) networkservice.NetworkService
 }
 
 func (u *updateTokenServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("updatetokenserver forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("updatetokenserver back")
+	}()
+
 	if prev := request.GetConnection().GetPrevPathSegment(); prev != nil {
 		var tok, expireTime, err = token.FromContext(ctx)
 

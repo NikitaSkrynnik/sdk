@@ -18,12 +18,14 @@ package connect
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 	"github.com/networkservicemesh/sdk/pkg/tools/postpone"
 
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
@@ -45,6 +47,11 @@ func NewServer(client networkservice.NetworkServiceClient, callOptions ...grpc.C
 }
 
 func (c *connectServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("connectServer forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("connectServer back")
+	}()
+
 	closeCtxFunc := postpone.ContextWithValues(ctx)
 	clientConn, clientErr := c.client.Request(ctx, request, c.callOptions...)
 	if clientErr != nil {

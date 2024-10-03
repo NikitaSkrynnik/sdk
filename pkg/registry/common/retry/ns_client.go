@@ -87,6 +87,11 @@ func (r *retryNSClient) Register(ctx context.Context, in *registry.NetworkServic
 }
 
 func (r *retryNSClient) Find(ctx context.Context, query *registry.NetworkServiceQuery, opts ...grpc.CallOption) (registry.NetworkServiceRegistry_FindClient, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("retryNSClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).Infof("retryNSClient back")
+	}()
+
 	logger := log.FromContext(ctx).WithField("retryNSClient", "Find")
 	c := clock.FromContext(ctx)
 

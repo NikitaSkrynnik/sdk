@@ -21,8 +21,10 @@ package roundrobin
 import (
 	"context"
 	"net/url"
+	"time"
 
 	"github.com/networkservicemesh/sdk/pkg/tools/clienturlctx"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
@@ -46,6 +48,11 @@ func NewServer() networkservice.NetworkServiceServer {
 }
 
 func (s *selectEndpointServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("roundrobin forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("roundrobin back")
+	}()
+
 	if clienturlctx.ClientURL(ctx) != nil {
 		return next.Server(ctx).Request(ctx, request)
 	}

@@ -22,6 +22,7 @@ package filtermechanisms
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
@@ -31,6 +32,7 @@ import (
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
 	"github.com/networkservicemesh/sdk/pkg/tools/clienturlctx"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type filterMechanismsClient struct{}
@@ -42,6 +44,11 @@ func NewClient() networkservice.NetworkServiceClient {
 }
 
 func (s *filterMechanismsClient) Request(ctx context.Context, request *networkservice.NetworkServiceRequest, opts ...grpc.CallOption) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("filterMechanismsClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("filterMechanismsClient back")
+	}()
+
 	u := clienturlctx.ClientURL(ctx)
 	if u.Scheme == "inode" || u.Scheme == "unix" {
 		request.MechanismPreferences = filterMechanismsByCls(request.GetMechanismPreferences(), cls.LOCAL)

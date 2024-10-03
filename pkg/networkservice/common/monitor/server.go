@@ -22,11 +22,13 @@ package monitor
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/clientconn"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/utils/metadata"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 
@@ -56,6 +58,11 @@ func NewServer(chainCtx context.Context, monitorServerPtr *networkservice.Monito
 }
 
 func (m *monitorServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("monitor forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("monitor back")
+	}()
+
 	// Cancel any existing eventLoop
 	cancelEventLoop, loaded := loadAndDelete(ctx, metadata.IsClient(m))
 	if loaded {

@@ -20,6 +20,7 @@ package heal
 
 import (
 	"context"
+	"time"
 
 	"github.com/edwarnicke/genericsync"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -29,6 +30,7 @@ import (
 
 	"github.com/networkservicemesh/sdk/pkg/registry/common/begin"
 	"github.com/networkservicemesh/sdk/pkg/registry/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type healNSClient struct {
@@ -80,6 +82,11 @@ func (c *healNSClient) Register(ctx context.Context, ns *registry.NetworkService
 }
 
 func (c *healNSClient) Find(ctx context.Context, query *registry.NetworkServiceQuery, opts ...grpc.CallOption) (registry.NetworkServiceRegistry_FindClient, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("healNSClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).Infof("healNSClient back")
+	}()
+
 	if !query.Watch || isNSFindHealing(ctx) {
 		return next.NetworkServiceRegistryClient(ctx).Find(ctx, query, opts...)
 	}

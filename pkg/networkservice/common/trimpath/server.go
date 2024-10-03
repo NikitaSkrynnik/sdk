@@ -18,11 +18,13 @@ package trimpath
 
 import (
 	"context"
+	"time"
 
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type trimpathServer struct{}
@@ -34,6 +36,11 @@ func NewServer() networkservice.NetworkServiceServer {
 }
 
 func (t *trimpathServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("trimpath forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("trimpath back")
+	}()
+
 	conn, err := next.Server(ctx).Request(ctx, request)
 	if err != nil {
 		return nil, err

@@ -21,6 +21,7 @@ package discover
 import (
 	"context"
 	"net/url"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
@@ -51,6 +52,10 @@ func NewServer(nsClient registry.NetworkServiceRegistryClient, nseClient registr
 }
 
 func (d *discoverCandidatesServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("discover forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("discover back")
+	}()
 	if clienturlctx.ClientURL(ctx) != nil {
 		return next.Server(ctx).Request(ctx, request)
 	}
@@ -67,14 +72,19 @@ func (d *discoverCandidatesServer) Request(ctx context.Context, request *network
 		}
 		return next.Server(ctx).Request(clienturlctx.WithClientURL(ctx, u), request)
 	}
-	ns, err := d.discoverNetworkService(ctx, request.GetConnection().GetNetworkService(), request.GetConnection().GetPayload())
+	start := time.Now()
+	ns, err := d.discoverNetworkService(request.Connection.Path.PathSegments[0].Id, ctx, request.GetConnection().GetNetworkService(), request.GetConnection().GetPayload())
 	if err != nil {
 		return nil, err
 	}
-	nses, err := d.discoverNetworkServiceEndpoints(ctx, ns, request.GetConnection().GetLabels())
+	log.FromContext(ctx).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("discover NS: %v", time.Since(start).Milliseconds())
+
+	start = time.Now()
+	nses, err := d.discoverNetworkServiceEndpoints(request.Connection.Path.PathSegments[0].Id, ctx, ns, request.GetConnection().GetLabels())
 	if err != nil {
 		return nil, err
 	}
+	log.FromContext(ctx).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("discover NSEs: %v", time.Since(start).Milliseconds())
 
 	request.GetConnection().Payload = ns.Payload
 
@@ -134,7 +144,7 @@ func (d *discoverCandidatesServer) discoverNetworkServiceEndpoint(ctx context.Co
 	return nil, errors.Errorf("network service endpoint %v not found", nseName)
 }
 
-func (d *discoverCandidatesServer) discoverNetworkServiceEndpoints(ctx context.Context, ns *registry.NetworkService, nsLabels map[string]string) ([]*registry.NetworkServiceEndpoint, error) {
+func (d *discoverCandidatesServer) discoverNetworkServiceEndpoints(id string, ctx context.Context, ns *registry.NetworkService, nsLabels map[string]string) ([]*registry.NetworkServiceEndpoint, error) {
 	clockTime := clock.FromContext(ctx)
 
 	query := &registry.NetworkServiceEndpointQuery{
@@ -143,13 +153,23 @@ func (d *discoverCandidatesServer) discoverNetworkServiceEndpoints(ctx context.C
 		},
 	}
 
+	logger := log.FromContext(ctx).WithField("id", id)
+	ctx = log.WithLog(ctx, logger)
+
+	start := time.Now()
 	nseRespStream, err := d.nseClient.Find(ctx, query)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to find %s", query.String())
 	}
-	nseList := registry.ReadNetworkServiceEndpointList(nseRespStream)
+	log.FromContext(ctx).WithField("id", id).Infof("d.nseClient.Find: %v", time.Since(start).Milliseconds())
 
+	start = time.Now()
+	nseList := registry.ReadNetworkServiceEndpointList(nseRespStream)
+	log.FromContext(ctx).WithField("id", id).Infof("ReadNetworkServiceEndpointList: %v", time.Since(start).Milliseconds())
+
+	start = time.Now()
 	result := matchutils.MatchEndpoint(nsLabels, ns, validateExpirationTime(clockTime, nseList)...)
+	log.FromContext(ctx).WithField("id", id).Infof("matchEndpoint: %v", time.Since(start).Milliseconds())
 	if len(result) != 0 {
 		return result, nil
 	}
@@ -157,7 +177,7 @@ func (d *discoverCandidatesServer) discoverNetworkServiceEndpoints(ctx context.C
 	return nil, errors.New("network service endpoint candidates not found")
 }
 
-func (d *discoverCandidatesServer) discoverNetworkService(ctx context.Context, name, payload string) (*registry.NetworkService, error) {
+func (d *discoverCandidatesServer) discoverNetworkService(id string, ctx context.Context, name, payload string) (*registry.NetworkService, error) {
 	query := &registry.NetworkServiceQuery{
 		NetworkService: &registry.NetworkService{
 			Name:    name,
@@ -165,11 +185,19 @@ func (d *discoverCandidatesServer) discoverNetworkService(ctx context.Context, n
 		},
 	}
 
+	logger := log.FromContext(ctx).WithField("id", id)
+	ctx = log.WithLog(ctx, logger)
+
+	start := time.Now()
 	nsRespStream, err := d.nsClient.Find(ctx, query)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to find %s", query.String())
 	}
+	log.FromContext(ctx).WithField("id", id).Infof("d.nsClient.Find: %v", time.Since(start).Milliseconds())
+
+	start = time.Now()
 	nsList := registry.ReadNetworkServiceList(nsRespStream)
+	log.FromContext(ctx).WithField("id", id).Infof("ReadNetworkServiceList: %v", time.Since(start).Milliseconds())
 
 	for _, ns := range nsList {
 		if ns.Name == name {

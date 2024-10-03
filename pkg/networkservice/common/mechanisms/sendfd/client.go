@@ -21,6 +21,7 @@ package sendfd
 
 import (
 	"context"
+	"time"
 
 	"github.com/edwarnicke/grpcfd"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -29,6 +30,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type sendFDClient struct{}
@@ -39,6 +41,10 @@ func NewClient() networkservice.NetworkServiceClient {
 }
 
 func (s *sendFDClient) Request(ctx context.Context, request *networkservice.NetworkServiceRequest, opts ...grpc.CallOption) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("sendfdclient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("sendfdclient back")
+	}()
 	// Get the grpcfd.FDSender
 	rpcCredentials := grpcfd.PerRPCCredentials(grpcfd.PerRPCCredentialsFromCallOptions(opts...))
 	opts = append(opts, grpc.PerRPCCredentials(rpcCredentials))
@@ -51,11 +57,15 @@ func (s *sendFDClient) Request(ctx context.Context, request *networkservice.Netw
 			return nil, err
 		}
 	}
+	start := time.Now()
 	// Call the next Client in the chain
 	conn, err := next.Client(ctx).Request(ctx, request, opts...)
 	if err != nil {
 		return nil, err
 	}
+
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("ENDPOINT spent: %v", time.Since(start).Milliseconds())
+
 	// Is we don't have a InodeURL Parameter on the selected Mechanism... we don't need to translate it back
 	if conn.GetMechanism().GetParameters() == nil || conn.GetMechanism().GetParameters()[common.InodeURL] == "" {
 		return conn, nil

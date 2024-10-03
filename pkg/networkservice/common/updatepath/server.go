@@ -21,12 +21,14 @@ package updatepath
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type updatePathServer struct {
@@ -43,6 +45,16 @@ func NewServer(name string) networkservice.NetworkServiceServer {
 }
 
 func (i *updatePathServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (conn *networkservice.Connection, err error) {
+
+	start := time.Now()
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("updatepath forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("updatepath back")
+
+		end := time.Now()
+		log.FromContext(ctx).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("time spent: %v", end.Sub(start).Milliseconds())
+	}()
+
 	if request.Connection == nil {
 		request.Connection = &networkservice.Connection{}
 	}

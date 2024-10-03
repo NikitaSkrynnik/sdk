@@ -123,7 +123,6 @@ func NewServer(ctx context.Context, tokenGenerator token.GeneratorFunc, options 
 			updatepath.NewServer(opts.name),
 			begin.NewServer(),
 			updatetoken.NewServer(tokenGenerator),
-			opts.authorizeServer,
 			metadata.NewServer(),
 			timeout.NewServer(ctx),
 			monitor.NewServer(ctx, &mcsPtr),

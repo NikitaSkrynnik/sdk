@@ -27,6 +27,7 @@ import (
 	"context"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/edwarnicke/genericsync"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -50,6 +51,11 @@ func NewClient() networkservice.NetworkServiceClient {
 }
 
 func (r *recvFDClient) Request(ctx context.Context, request *networkservice.NetworkServiceRequest, opts ...grpc.CallOption) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("recvfdclient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("recvfdclient back")
+	}()
+
 	// Get the grpcfd.FDRecver
 	rpcCredentials := grpcfd.PerRPCCredentials(grpcfd.PerRPCCredentialsFromCallOptions(opts...))
 	opts = append(opts, grpc.PerRPCCredentials(rpcCredentials))

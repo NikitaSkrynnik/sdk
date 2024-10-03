@@ -20,6 +20,7 @@ package metadata
 
 import (
 	"context"
+	"time"
 
 	"github.com/edwarnicke/genericsync"
 
@@ -43,6 +44,11 @@ func NewServer() networkservice.NetworkServiceServer {
 }
 
 func (m *metadataServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("metadata forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("metadata back")
+	}()
+
 	connID := request.GetConnection().GetId()
 	_, isEstablished := m.Map.Load(connID)
 

@@ -36,6 +36,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/networkservicemesh/sdk/pkg/registry/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type perEndpointFileMap struct {
@@ -83,7 +84,10 @@ type recvfdNSEFindClient struct {
 }
 
 func (x *recvfdNSEFindClient) Recv() (*registry.NetworkServiceEndpointResponse, error) {
+	log.FromContext(x.Context()).Infof("recvfdNSEFindClient recv forth")
+
 	nseResp, err := x.NetworkServiceEndpointRegistry_FindClient.Recv()
+	log.FromContext(x.Context()).Infof("recvfdNSEFindClient recv back 1")
 	if err != nil {
 		return nil, err
 	}
@@ -105,5 +109,6 @@ func (x *recvfdNSEFindClient) Recv() (*registry.NetworkServiceEndpointResponse, 
 			closeFiles(nseResp.GetNetworkServiceEndpoint(), x.fileMaps)
 		}
 	}
+	log.FromContext(x.Context()).Infof("recvfdNSEFindClient recv back 2")
 	return nseResp, err
 }

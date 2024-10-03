@@ -56,6 +56,11 @@ func NewClient(chainCtx context.Context, opts ...Option) networkservice.NetworkS
 }
 
 func (d *dialClient) Request(ctx context.Context, request *networkservice.NetworkServiceRequest, opts ...grpc.CallOption) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("dialClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("dialClient back")
+	}()
+
 	closeContextFunc := postpone.ContextWithValues(ctx)
 	// If no clientURL, we have no work to do
 	// call the next in the chain

@@ -19,6 +19,7 @@ package cleanup
 import (
 	"context"
 	"sync/atomic"
+	"time"
 
 	"github.com/edwarnicke/serialize"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -29,6 +30,7 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/begin"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/clientconn"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type cleanupClient struct {
@@ -67,6 +69,11 @@ func NewClient(ctx context.Context, opts ...Option) networkservice.NetworkServic
 }
 
 func (c *cleanupClient) Request(ctx context.Context, request *networkservice.NetworkServiceRequest, opts ...grpc.CallOption) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("cleanupClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("cleanupClient back")
+	}()
+
 	conn, err := next.Client(ctx).Request(ctx, request, opts...)
 	if err != nil {
 		return nil, err

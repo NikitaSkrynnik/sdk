@@ -121,6 +121,11 @@ type dialNSEFindClient struct {
 }
 
 func (c *dialNSEFindClient) Recv() (*registry.NetworkServiceEndpointResponse, error) {
+	log.FromContext(c.Context()).Infof("dialNSEFindClient forth")
+	defer func() {
+		log.FromContext(c.Context()).Infof("dialNSEFindClient back")
+	}()
+
 	resp, err := c.NetworkServiceEndpointRegistry_FindClient.Recv()
 	if err != nil {
 		c.cleanupFn()
@@ -129,11 +134,17 @@ func (c *dialNSEFindClient) Recv() (*registry.NetworkServiceEndpointResponse, er
 }
 
 func (c *dialNSEClient) Find(ctx context.Context, in *registry.NetworkServiceEndpointQuery, opts ...grpc.CallOption) (registry.NetworkServiceEndpointRegistry_FindClient, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSEClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSEClient back")
+	}()
+
 	clientURL := clienturlctx.ClientURL(ctx)
 	if clientURL == nil {
 		return next.NetworkServiceEndpointRegistryClient(ctx).Find(ctx, in, opts...)
 	}
 
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSEClient forth 1")
 	di := newDialer(c.chainCtx, c.dialTimeout, c.dialOptions...)
 
 	err := di.Dial(ctx, clientURL)
@@ -141,7 +152,7 @@ func (c *dialNSEClient) Find(ctx context.Context, in *registry.NetworkServiceEnd
 		log.FromContext(ctx).Errorf("can not dial to %v, err %v. Deleting clientconn...", grpcutils.URLToTarget(clientURL), err)
 		return nil, err
 	}
-
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSEClient forth 2")
 	clientconn.Store(ctx, di)
 
 	cleanupFn := func() {
@@ -149,12 +160,14 @@ func (c *dialNSEClient) Find(ctx context.Context, in *registry.NetworkServiceEnd
 		_ = di.Close()
 	}
 
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSEClient forth 3")
 	resp, err := next.NetworkServiceEndpointRegistryClient(ctx).Find(ctx, in, opts...)
 	if err != nil {
 		cleanupFn()
 		return nil, err
 	}
 
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSEClient back 1")
 	var stopContext, stopCancel = context.WithTimeout(resp.Context(), time.Minute/4)
 
 	cleanupFn = func() {
@@ -168,6 +181,7 @@ func (c *dialNSEClient) Find(ctx context.Context, in *registry.NetworkServiceEnd
 		cleanupFn()
 	}()
 
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialNSEClient back 2")
 	return &dialNSEFindClient{
 		NetworkServiceEndpointRegistry_FindClient: resp,
 		cleanupFn: cleanupFn,

@@ -22,12 +22,14 @@ package mechanisms
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 	"github.com/pkg/errors"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/chain"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type mechanismsServer struct {
@@ -54,6 +56,11 @@ func NewServer(mechanisms map[string]networkservice.NetworkServiceServer) networ
 }
 
 func (ms *mechanismsServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("mechanismsServer forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("mechanismsServer back")
+	}()
+
 	mech := request.GetConnection().GetMechanism()
 	if mech != nil {
 		srv, ok := ms.mechanisms[mech.GetType()]

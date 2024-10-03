@@ -20,10 +20,12 @@ package clienturl
 import (
 	"context"
 	"net/url"
+	"time"
 
 	"google.golang.org/grpc"
 
 	"github.com/networkservicemesh/sdk/pkg/tools/clienturlctx"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 
 	"github.com/golang/protobuf/ptypes/empty"
 
@@ -42,6 +44,11 @@ func NewClient(u *url.URL) networkservice.NetworkServiceClient {
 }
 
 func (c *clientURLClient) Request(ctx context.Context, request *networkservice.NetworkServiceRequest, opts ...grpc.CallOption) (*networkservice.Connection, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("clientURLClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("clientURLClient back")
+	}()
+
 	if c.u != nil {
 		ctx = clienturlctx.WithClientURL(ctx, c.u)
 	}

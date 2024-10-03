@@ -20,6 +20,7 @@ package mechanismtranslation
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
@@ -27,6 +28,7 @@ import (
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type mechanismTranslationClient struct{}
@@ -37,6 +39,11 @@ func NewClient() networkservice.NetworkServiceClient {
 }
 
 func (c *mechanismTranslationClient) Request(ctx context.Context, request *networkservice.NetworkServiceRequest, opts ...grpc.CallOption) (conn *networkservice.Connection, err error) {
+	log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("mechanismtranslationclient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).WithField("id", request.Connection.Path.PathSegments[0].Id).Infof("mechanismtranslationclient back")
+	}()
+
 	// 1. Translate request mechanisms
 	clientRequest := request.Clone()
 	clientRequest.MechanismPreferences = nil

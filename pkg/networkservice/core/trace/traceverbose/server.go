@@ -26,7 +26,6 @@ import (
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
-	"github.com/networkservicemesh/sdk/pkg/tools/typeutils"
 )
 
 type beginTraceServer struct {
@@ -44,46 +43,27 @@ func NewNetworkServiceServer(traced networkservice.NetworkServiceServer) network
 }
 
 func (t *beginTraceServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
-	// Create a new logger
-	operation := typeutils.GetFuncName(t.traced, methodNameRequest)
-	ctx, finish := withLog(ctx, operation, methodNameRequest, request.GetConnection().GetId())
-	defer finish()
-
-	logRequest(ctx, request, "request")
-	// Actually call the next
 	rv, err := t.traced.Request(ctx, request)
 	if err != nil {
-		return nil, logError(ctx, err, operation)
+		return nil, err
 	}
-	logResponse(ctx, rv, "request")
 	return rv, err
 }
 
 func (t *beginTraceServer) Close(ctx context.Context, conn *networkservice.Connection) (*empty.Empty, error) {
-	// Create a new logger
-	operation := typeutils.GetFuncName(t.traced, methodNameClose)
-	ctx, finish := withLog(ctx, operation, methodNameClose, conn.GetId())
-	defer finish()
-
-	logRequest(ctx, conn, "close")
 	rv, err := t.traced.Close(ctx, conn)
 	if err != nil {
-		return nil, logError(ctx, err, operation)
+		return nil, err
 	}
-	logResponse(ctx, conn, "close")
 	return rv, err
 }
 
 func (t *endTraceServer) Request(ctx context.Context, request *networkservice.NetworkServiceRequest) (*networkservice.Connection, error) {
-	logRequest(ctx, request, "request")
 	conn, err := next.Server(ctx).Request(ctx, request)
-	logResponse(ctx, conn, "request")
 	return conn, err
 }
 
 func (t *endTraceServer) Close(ctx context.Context, conn *networkservice.Connection) (*empty.Empty, error) {
-	logRequest(ctx, conn, "close")
 	r, err := next.Server(ctx).Close(ctx, conn)
-	logResponse(ctx, conn, "close")
 	return r, err
 }

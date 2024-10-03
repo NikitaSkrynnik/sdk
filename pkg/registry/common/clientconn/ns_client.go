@@ -19,6 +19,7 @@ package clientconn
 
 import (
 	"context"
+	"time"
 
 	"github.com/edwarnicke/genericsync"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -27,6 +28,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/networkservicemesh/sdk/pkg/registry/core/next"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type clientConnNSClient struct {
@@ -44,6 +46,11 @@ func (c *clientConnNSClient) Unregister(ctx context.Context, in *registry.Networ
 }
 
 func (c *clientConnNSClient) Find(ctx context.Context, in *registry.NetworkServiceQuery, opts ...grpc.CallOption) (registry.NetworkServiceRegistry_FindClient, error) {
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("clientConnNSClient forth")
+	defer func() {
+		log.FromContext(ctx).WithField("time", time.Now()).Infof("clientConnNSClient back")
+	}()
+
 	ctx = withClientConnMetadata(ctx, &c.Map, uuid.New().String())
 	return next.NetworkServiceRegistryClient(ctx).Find(ctx, in, opts...)
 }

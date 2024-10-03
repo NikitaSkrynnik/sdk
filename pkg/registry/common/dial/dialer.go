@@ -27,13 +27,14 @@ import (
 
 	"github.com/networkservicemesh/sdk/pkg/tools/clock"
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
 )
 
 type dialer struct {
 	ctx            context.Context
 	cleanupContext context.Context
 	clientURL      *url.URL
-	cleanupCancel  context.CancelFunc
+	done           chan struct{}
 	*grpc.ClientConn
 	dialOptions []grpc.DialOption
 	dialTimeout time.Duration
@@ -48,12 +49,15 @@ func newDialer(ctx context.Context, dialTimeout time.Duration, dialOptions ...gr
 }
 
 func (di *dialer) Dial(ctx context.Context, clientURL *url.URL) error {
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialer 0")
+
 	if di == nil {
 		return errors.New("cannot call dialer.Dial on  nil dialer")
 	}
 	// Cleanup any previous grpc.ClientConn
-	if di.cleanupCancel != nil {
-		di.cleanupCancel()
+	if di.done != nil {
+		close(di.done)
+		di.done = nil
 	}
 
 	// Set the clientURL
@@ -65,7 +69,9 @@ func (di *dialer) Dial(ctx context.Context, clientURL *url.URL) error {
 		dialCtx, _ = clock.FromContext(di.ctx).WithTimeout(dialCtx, di.dialTimeout)
 	}
 
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialer 1")
 	// Dial
+	//////// 600ms
 	target := grpcutils.URLToTarget(di.clientURL)
 	cc, err := grpc.DialContext(dialCtx, target, di.dialOptions...)
 	if err != nil {
@@ -75,19 +81,26 @@ func (di *dialer) Dial(ctx context.Context, clientURL *url.URL) error {
 		return errors.Wrapf(err, "failed to dial %s", target)
 	}
 	di.ClientConn = cc
+	////////
 
-	di.cleanupContext, di.cleanupCancel = context.WithCancel(di.ctx)
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialer 2")
 
-	go func(cleanupContext context.Context, cc *grpc.ClientConn) {
-		<-cleanupContext.Done()
+	/////// 150 ms?
+
+	go func(done <-chan struct{}, cc *grpc.ClientConn) {
+		<-done
 		_ = cc.Close()
-	}(di.cleanupContext, cc)
+	}(di.done, cc)
+	///////
+
+	log.FromContext(ctx).WithField("time", time.Now()).Infof("dialer 3")
 	return nil
 }
 
 func (di *dialer) Close() error {
-	if di != nil && di.cleanupCancel != nil {
-		di.cleanupCancel()
+	if di != nil && di.done != nil {
+		close(di.done)
+		di.done = nil
 		runtime.Gosched()
 	}
 	return nil
